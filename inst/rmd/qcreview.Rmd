@@ -1,0 +1,243 @@
+---
+output: 
+  word_document:
+    reference_docx: !expr system.file("rmd", "qctemplate.docx", package = "MassWateR")
+params: 
+  resdatdt: resdatdt
+  accdat: accdat 
+  frecomdat: frecomdat
+  wd: wd
+  fontname: fontname
+  rawdata: rawdata
+  warn: warn
+  dqofontsize: dqofontsize 
+  tabfontsize: tabfontsize
+  padding: padding
+  tabfreper: tabfreper
+  tabfresum: tabfresum
+  tabaccper: tabaccper
+  tabaccsum: tabaccsum
+  tabcom: tabcom
+  indflddup: indflddup
+  indlabdup: indlabdup
+  indfldblk: indfldblk
+  indlabblk: indlabblk
+  indlabins: indlabins
+---
+
+```{r setup, echo = F}
+knitr::opts_chunk$set(echo = FALSE, ft.keepnext = F, warning = TRUE)
+suppressWarnings(suppressMessages(library(dplyr, warn.conflicts = FALSE, quietly = TRUE)))
+suppressWarnings(suppressMessages(library(flextable, warn.conflicts = FALSE, quietly = TRUE)))
+
+# user parameters
+resdatdt <- params$resdatdt
+accdat <- params$accdat
+frecomdat <- params$frecomdat
+wd <- params$wd
+fontname <- params$fontname
+rawdata <- params$rawdata
+warn <- params$warn
+dqofontsize <- params$dqofontsize
+tabfontsize <- params$tabfontsize
+padding <- params$padding
+tabfreper <- params$tabfreper
+tabfresum <- params$tabfresum
+tabaccper <- params$tabaccper
+tabaccsum <- params$tabaccsum
+tabcom <- params$tabcom
+indflddup <- params$indflddup
+indlabdup <- params$indlabdup
+indfldblk <- params$indfldblk
+indlabblk <- params$indlabblk
+indlabins <- params$indlabins
+
+dt <- format(Sys.Date(), "%b %d, %Y") 
+
+set_flextable_defaults(font.size = tabfontsize, padding = padding)
+
+# dqo table theme
+thmdqo <- function(x, fontname, dqofontsize, padding){
+  flextable::colformat_double(x, na_str = '-') %>% 
+    flextable::colformat_char(na_str = '-') %>% 
+    flextable::border_inner() %>% 
+    flextable::align(align = 'center', part = 'all') %>% 
+    flextable::align(align = 'left', j = 1, part = 'all') %>% 
+    flextable::fontsize(size = dqofontsize, part = 'all') %>% 
+    flextable::padding(padding = padding, part = 'all') %>% 
+    flextable::font(fontname = fontname, part = 'all')
+}
+
+# notes table
+notes <- function(wd, fontname){
+  
+  tab <- data.frame(
+    x = c('Notes:', NA, NA)
+  )
+
+  flextable::flextable(tab) %>% 
+    flextable::align(align = 'left', part = 'all') %>%
+    flextable::border_remove() %>%
+    flextable::width(width = wd) %>% 
+    flextable::hline(i = 2:3, part = 'body') %>%
+    flextable::padding(padding = 1.5, part = 'all') %>% 
+    flextable::delete_part(part = 'header') %>%
+    flextable::font(fontname = fontname, part = 'all') %>% 
+    flextable::fontsize(size = 11, part = 'all') 
+  
+}
+```
+
+# QC Review
+
+## Organization Name
+
+```{r, ft.align = 'left'}
+tab <- data.frame(
+  x = c(dt, 'Prepared by:', 'QAPP version:'),
+  y = c(NA, NA, NA)
+)
+
+flextable::flextable(tab) %>% 
+  flextable::align(align = 'left', j = c(1, 2), part = 'all') %>%
+  flextable::border_remove() %>%
+  flextable::width(j = 1, width = 1.2) %>% 
+  flextable::width(j = 2, width = 3) %>% 
+  flextable::hline(i = 2:3, j = 2, part = 'body') %>%
+  flextable::padding(padding = 1.5, part = 'all') %>% 
+  flextable::delete_part(part = 'header') %>%
+  flextable::font(fontname = fontname, part = 'all') %>% 
+  flextable::fontsize(size = 11, part = 'all') 
+```
+
+<br>
+
+### Data Quality Objectives
+
+```{r}
+frecomdat %>% 
+  dplyr::mutate_if(is.numeric, as.character) %>% 
+  dplyr::mutate_all(function(x) ifelse(is.na(x), '-', x)) %>% 
+  dplyr::arrange(Parameter) %>% 
+  flextable::flextable() %>% 
+  thmdqo(fontname = fontname, dqofontsize = dqofontsize, padding = padding) %>%
+  flextable::width(width = wd / ncol(frecomdat)) %>% 
+  flextable::add_header_row(value = c('', 'Frequency %', ''), colwidths = c(1, 5, 1))
+```
+
+<br>
+
+```{r}
+accdat %>% 
+  dplyr::mutate_if(is.numeric, as.character) %>% 
+  dplyr::mutate_all(function(x) ifelse(is.na(x), '-', x)) %>% 
+  dplyr::arrange(Parameter) %>% 
+  flextable::flextable() %>% 
+  thmdqo(fontname = fontname, dqofontsize = dqofontsize, padding = padding) %>% 
+  flextable::width(width = 1, j = 1) %>% 
+  flextable::width(width = (wd -1) / (flextable::ncol_keys(.) - 1), j = 2:flextable::ncol_keys(.)) 
+```
+
+<br>
+
+```{r}
+notes(wd, fontname)
+```
+
+\newpage
+
+### QC Frequencies for `r resdatdt`
+
+```{r}
+tabfreper
+```
+
+<br>
+
+```{r}
+tabfresum
+```
+
+<br>
+
+```{r}
+notes(wd, fontname)
+```
+
+\newpage
+
+### QC Accuracy Summary for `r resdatdt`
+
+```{r}
+tabaccper
+```
+
+<br>
+
+```{r}
+tabaccsum
+```
+
+<br>
+
+```{r}
+notes(wd, fontname)
+```
+
+\newpage
+
+### Data Completeness for `r resdatdt`
+
+```{r, warning = T}
+tabcom
+```
+
+<br>
+
+```{r}
+notes(wd, fontname)
+```
+
+`r if(rawdata){"\\newpage"}`
+
+`r if(rawdata){paste0("### QC Raw Data for ", resdatdt)}`
+
+```{r, eval = rawdata & !is.null(indflddup), results = 'asis'}
+cat("#### Field Duplicates\n")
+indflddup
+cat("<br>")
+notes(wd, fontname)
+cat("<br>")
+```
+
+```{r, eval = rawdata & !is.null(indlabdup), results = 'asis'}
+cat("#### Lab Duplicates\n")
+indlabdup
+cat("<br>")
+notes(wd, fontname)
+cat("<br>")
+```
+
+```{r, eval = rawdata & !is.null(indfldblk), results = 'asis'}
+cat("#### Field Blanks\n")
+indfldblk
+cat("<br>")
+notes(wd, fontname)
+cat("<br>")
+```
+
+```{r, eval = rawdata & !is.null(indlabblk), results = 'asis'}
+cat("#### Lab Blanks\n")
+indlabblk
+cat("<br>")
+notes(wd, fontname)
+cat("<br>")
+```
+
+```{r, eval = rawdata & !is.null(indlabins), results = 'asis'}
+cat("#### Lab Spikes / Instrument Checks\n")
+indlabins
+cat("<br>")
+notes(wd, fontname)
+cat("<br>")
+```
