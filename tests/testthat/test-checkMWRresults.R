@@ -26,6 +26,13 @@ test_that("Checking date formats", {
   expect_error(checkMWRresults(chk))
 })
 
+test_that("Checking depth data are present", {
+  chk <- resdat
+  chk[2:3, 'Activity Depth/Height Measure'] <- NA
+  chk[2:3, 'Activity Relative Depth Name'] <- NA
+  expect_error(checkMWRresults(chk))
+})
+
 test_that("Checking non-numeric Activity Depth/Height Measure", {
   chk <- resdat
   chk$`Activity Depth/Height Measure`[5] <- 'a'

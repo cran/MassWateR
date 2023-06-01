@@ -19,9 +19,10 @@
 #' @param repel logical indicating if overlapping site labels are offset, default \code{FALSE}
 #' @param labsize numeric indicating font size for the site labels, only if \code{group = "site"} or \code{group = "locgroup"}
 #' @param expand numeric of length two indicating expansion proportions on the x-axis to include labels outside of the plot range if \code{repel = F} and \code{group = "site"} or \code{group = "locgroup"}
-#' @param confint logical indicating if confidence intervals are shown, only applies if \code{type = "bar"}
+#' @param confint logical indicating if confidence intervals are shown, only applies if data are summarized using \code{group} as \code{"locgroup"} or \code{"all"}
 #' @param palcol character string indicating the color palette for points and lines from \href{https://r-graph-gallery.com/38-rcolorbrewers-palettes.html}{RColorBrewer}, see details
 #' @param yscl character indicating one of \code{"auto"} (default), \code{"log"}, or \code{"linear"}, see details
+#' @param sumfun character indicating one of \code{"auto"}, \code{"mean"}, \code{"geomean"}, \code{"median"}, \code{"min"}, or \code{"max"}, see details
 #' @param runchk logical to run data checks with \code{\link{checkMWRresults}} or \code{\link{checkMWRacc}}, applies only if \code{res} or \code{acc} are file paths
 #' @param colleg logical indicating if a color legend for sites or location groups is included if \code{group = "site"} or \code{group = "locgroup"}
 #' @param ttlsize numeric value indicating font size of the title relative to other text in the plot
@@ -29,13 +30,15 @@
 #'
 #' @return A \code{\link[ggplot2]{ggplot}} object that can be further modified.
 #' 
-#' @details Results are shown for the selected parameter as continuous line plots over time. Specifying \code{group = "site"} plot a separate line for each site.  Specifying \code{group = "locgroup"} will average results across sites in the `locgroup` argument.  The site metadata file must be passed to the \code{`sit`} argument to use this option.  Specifying \code{group = "all"} will average results across sites for each date.
+#' @details Results are shown for the selected parameter as continuous line plots over time. Specifying \code{group = "site"} plot a separate line for each site.  Specifying \code{group = "locgroup"} will summarize results across sites in the `locgroup` argument based on the value passed to \code{sumfun} or \code{yscl} if no value is passed to \code{sumfun}.  The site metadata file must be passed to the \code{`sit`} argument to use this option.  Specifying \code{group = "all"} will summarize results across sites for each date based on the value passed to \code{sumfun} or \code{yscl} if no value is passed to \code{sumfun}. Summarized results will include confidence intervals if \code{confint = TRUE} and they can be calculated (i.e., more than one point is used in the summary and data are summarized using \code{group} as \code{"locgroup"} or \code{"all"}).
 #'
 #' Threshold lines applicable to marine or freshwater environments can be included in the plot by using the \code{thresh} argument.  These thresholds are specific to each parameter and can be found in the \code{\link{thresholdMWR}} file.  Threshold lines are plotted only for those parameters with entries in \code{\link{thresholdMWR}} and only if the value in \code{`Result Unit`} matches those in \code{\link{thresholdMWR}}. The threshold lines can be suppressed by setting \code{thresh = 'none'}. A user-supplied numeric value can also be used for the \code{thresh} argument to override the default values. An appropriate label must also be supplied to \code{threshlab} if \code{thresh} is numeric.
 #'  
 #' Any acceptable color palette for from \href{https://r-graph-gallery.com/38-rcolorbrewers-palettes.html}{RColorBrewer} for the points and lines can be used for \code{palcol}, which is passed to the \code{palette} argument in \code{\link[ggplot2]{scale_color_brewer}}. These could include any of the qualitative color palettes, e.g., \code{"Set1"}, \code{"Set2"}, etc.  The continuous and diverging palettes will also work, but may return color scales for points and lines that are difficult to distinguish.  The \code{palcol} argument does not apply if \code{group = "all"}. 
 #' 
 #' The y-axis scaling as arithmetic (linear) or logarithmic can be set with the \code{yscl} argument.  If \code{yscl = "auto"} (default), the scaling is  determined automatically from the data quality objective file for accuracy, i.e., parameters with "log" in any of the columns are plotted on log10-scale, otherwise arithmetic. Setting \code{yscl = "linear"} or \code{yscl = "log"} will set the axis as linear or log10-scale, respectively, regardless of the information in the data quality objective file for accuracy. 
+#' 
+#' Similarly, the data will be summarized appropriately for \code{group} (only applies if \code{group} is not site) based on the value passed to \code{sumfun}.  The default if no value is provided to \code{sumfun} is to use the appropriate summary based on the value provided to \code{yscl}.  If \code{yscl = "auto"} (default), then \code{sumfun = "auto"}, and the mean or geometric mean is used for the summary based on information in the data quality objective file for accuracy. Using \code{yscl = "linear"} or \code{yscl = "log"} will default to the mean or geometric mean summary if no value is provided to \code{sumfun}.  Any other appropriate value passed to \code{sumfun} will override the value passed to \code{yscl}.  Valid summary functions for \code{sumfun} include \code{"auto"}, \code{"mean"}, \code{"geomean"}, \code{"median"}, \code{"min"}, or \code{"max"}). 
 #' 
 #' Any entries in \code{resdat} in the \code{"Result Value"} column as \code{"BDL"} or \code{"AQL"} are replaced with appropriate values in the \code{"Quantitation Limit"} column, if present, otherwise the \code{"MDL"} or \code{"UQL"} columns from the data quality objectives file for accuracy are used.  Values as \code{"BDL"} use one half of the appropriate limit.
 #' 
@@ -65,7 +68,7 @@
 #' # select sites
 #' anlzMWRdate(res = resdat, param = 'DO', acc = accdat, group = 'site', thresh = 'fresh',
 #'      site = c("ABT-026", "ABT-077"))
-anlzMWRdate <- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, thresh, group = c('site', 'locgroup', 'all'), threshlab = NULL, threshcol = 'tan', site = NULL, resultatt = NULL, locgroup = NULL, dtrng = NULL, ptsize = 2, repel = FALSE, labsize = 3, expand = c(0.05, 0.1), confint = FALSE, palcol = 'Set2', yscl = c('auto', 'log', 'linear'), colleg = FALSE, ttlsize = 1.2, runchk = TRUE, warn = TRUE){
+anlzMWRdate <- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, thresh, group = c('site', 'locgroup', 'all'), threshlab = NULL, threshcol = 'tan', site = NULL, resultatt = NULL, locgroup = NULL, dtrng = NULL, ptsize = 2, repel = FALSE, labsize = 3, expand = c(0.05, 0.1), confint = FALSE, palcol = 'Set2', yscl = 'auto', sumfun = yscl, colleg = FALSE, ttlsize = 1.2, runchk = TRUE, warn = TRUE){
   
   # remove site from input list check because optional
   chkin <- mget(ls())
@@ -124,6 +127,8 @@ anlzMWRdate <- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, 
     )
   
   ylab <- unique(toplo$`Result Unit`)
+  
+  # title, changed below as needed if summarized
   ttl <- utilMWRtitle(param = param, site = site, dtrng = dtrng, locgroup = locgroup, resultatt = resultatt)
   
   p <- ggplot2::ggplot()
@@ -182,11 +187,13 @@ anlzMWRdate <- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, 
   
   if(group == 'locgroup'){
     
+    ttl <- utilMWRtitle(param = param, accdat = accdat, sumfun = sumfun, site = site, dtrng = dtrng, locgroup = locgroup, resultatt = resultatt)
+    
     toplo <- toplo %>% 
       dplyr::group_by(`Activity Start Date`, `Location Group`) 
 
-    # get mean and CI summary
-    toplo <- utilMWRconfint(toplo, logscl = logscl)
+    # get summarized data
+    toplo <- utilMWRsummary(toplo, accdat = accdat, param = param, sumfun = sumfun, confint = confint)
     
     # group labels
     grplb <- toplo %>% 
@@ -213,7 +220,10 @@ anlzMWRdate <- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, 
         na.rm = T, size = labsize, hjust = 0, nudge_x = 3, show.legend = FALSE) +
         ggplot2::scale_x_date(expand = ggplot2::expansion(mult = expand))
     
-    if(confint)
+    # make sure confint is calculated
+    chkbar <- any(!is.na(toplo$lov))
+    
+    if(confint & chkbar)
       p <- p + 
        ggplot2::geom_errorbar(data = toplo, ggplot2::aes(x = `Activity Start Date`, ymin = lov, ymax = hiv, group = `Location Group`, color = `Location Group`), width = 1, show.legend = colleg)
     
@@ -232,17 +242,22 @@ anlzMWRdate <- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, 
   # combine all sites
   if(group == 'all'){
     
+    ttl <- utilMWRtitle(param = param, accdat = accdat, sumfun = sumfun, site = site, dtrng = dtrng, locgroup = locgroup, resultatt = resultatt)
+    
     toplo <- toplo %>% 
       dplyr::group_by(`Activity Start Date`) 
     
-    # get mean and CI summary
-    toplo <- utilMWRconfint(toplo, logscl = logscl)
+    # get summarized data
+    toplo <- utilMWRsummary(toplo, accdat = accdat, param = param, sumfun = sumfun, confint = confint)
     
     p <- p +
       ggplot2::geom_line(data = toplo, ggplot2::aes(x = `Activity Start Date`, y = `Result Value`)) + 
       ggplot2::geom_point(data = toplo, ggplot2::aes(x = `Activity Start Date`, y = `Result Value`), size = ptsize)
     
-    if(confint)
+    # make sure confint is calculated
+    chkbar <- any(!is.na(toplo$lov))
+    
+    if(confint & chkbar)
       p <- p + 
         ggplot2::geom_errorbar(data = toplo, ggplot2::aes(x = `Activity Start Date`, ymin = lov, ymax = hiv), width = 1, show.legend = colleg)
     

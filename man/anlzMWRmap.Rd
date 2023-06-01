@@ -18,13 +18,15 @@ anlzMWRmap(
   repel = TRUE,
   labsize = 3,
   palcol = "Greens",
-  yscl = c("auto", "log", "linear"),
+  palcolrev = FALSE,
+  sumfun = "auto",
   crs = 4326,
   zoom = 11,
   addwater = "medium",
   watercol = "lightblue",
   maptype = NULL,
   buffdist = 2,
+  scaledist = "km",
   northloc = "tl",
   scaleloc = "br",
   latlon = TRUE,
@@ -60,7 +62,9 @@ anlzMWRmap(
 
 \item{palcol}{character string indicating the color palette to be used from \href{https://r-graph-gallery.com/38-rcolorbrewers-palettes.html}{RColorBrewer}, see details}
 
-\item{yscl}{character indicating one of \code{"auto"} (default), \code{"log"}, or \code{"linear"}, see details}
+\item{palcolrev}{logical indicating if color palette in \code{palcol} is reversed}
+
+\item{sumfun}{character indicating one of \code{"auto"} (default), \code{"mean"}, \code{"geomean"}, \code{"median"}, \code{"min"}, or \code{"max"}, see details}
 
 \item{crs}{numeric as a four-digit EPSG number for the coordinate reference system, see details}
 
@@ -72,7 +76,9 @@ anlzMWRmap(
 
 \item{maptype}{character string for the base map type, see details}
 
-\item{buffdist}{numeric for buffer around the bounding box for the selected sites, see details}
+\item{buffdist}{numeric for buffer around the bounding box for the selected sites in kilometers, see details}
+
+\item{scaledist}{character string indicating distance unit for the scale bar, \code{"km"} or \code{"mi"}}
 
 \item{northloc}{character string indicating location of the north arrow, see details}
 
@@ -95,11 +101,11 @@ Analyze results with maps
 \details{
 This function creates a map of summarized results for a selected parameter at each monitoring site.  By default, all dates for the parameter are averaged. Options to filter by site, date range, and result attribute are provided.  Only sites with spatial information in the site metadata file are plotted and a warning is returned for those that do not have this information. The site labels are also plotted next to each point.  The labels can be suppressed by setting \code{labsize = NULL}.
 
-Any acceptable color palette from \href{https://r-graph-gallery.com/38-rcolorbrewers-palettes.html}{RColorBrewer} can be used for \code{palcol}, which is passed to the \code{palette} argument in \code{\link[ggplot2]{scale_fill_distiller}}. These could include any of the sequential color palettes, e.g., \code{"Greens"}, \code{"Blues"}, etc.  The diverging and qualitative palettes will also work, but may return uninterpretable color scales.
+Any acceptable color palette from \href{https://r-graph-gallery.com/38-rcolorbrewers-palettes.html}{RColorBrewer} can be used for \code{palcol}, which is passed to the \code{palette} argument in \code{\link[ggplot2]{scale_fill_distiller}}. These could include any of the sequential color palettes, e.g., \code{"Greens"}, \code{"Blues"}, etc.  The diverging and qualitative palettes will also work, but may return uninterpretable color scales. The palette can be reversed by setting \code{palcolrev = TRUE}.
 
 The default value for \code{crs} is EPSG 4326 for the WGS 84 projection in decimal degrees.  The \code{crs} argument is passed to \code{\link[sf]{st_as_sf}} and any acceptable CRS appropriate for the data can be used.
 
-The results shown on the map represent the parameter average for each site within the date range provided by \code{dtrng}.  The average may differ depending on the value provided to the \code{yscl} argument.  Log10-distributed parameters use the geometric mean and normally-distributed parameters use the arithmetic mean.  The distribution is determined from the \code{ycsl} argument. If \code{yscl = "auto"} (default), the distribution is determined automatically from the data quality objective file for accuracy, i.e., parameters with "log" in any of the columns are summarized with the geometric mean, otherwise arithmetic. Setting \code{yscl = "linear"} or \code{yscl = "log"} will the use arithmetic or geometric summaries, respectively, regardless of the information in the data quality objective file for accuracy.
+The results shown on the map represent the parameter summary for each site within the date range provided by \code{dtrng}.  If \code{sumfun = "auto"} (default), the mean is used where the distribution is determined automatically from the data quality objective file for accuracy, i.e., parameters with "log" in any of the columns are summarized with the geometric mean, otherwise arithmetic. Any other valid summary function will be applied if passed to \code{sumfun} (\code{"mean"}, \code{"geomean"}, \code{"median"}, \code{"min"}, \code{"max"}), regardless of the information in the data quality objective file for accuracy.
 
 Using \code{addwater = "medium"} (default) will include lines and polygons of natural water bodies defined using the National Hydrography Dataset (NHD). The level of detail can be changed to low or high using \code{addwater = "low"} or \code{addwater = "high"}, respectively.  Use \code{addwater = NULL} to not show any water features.
 
@@ -130,6 +136,6 @@ sitdat <- readMWRsites(sitpth)
 
 \donttest{
 # map with NHD water bodies
-anlzMWRmap(res = resdat, param = 'DO', acc = accdat, sit = sitdat, addwater = "medium")
+anlzMWRmap(res = resdat, param = 'DO', acc = accdat, sit = sitdat, addwater = 'medium')
 }
 }

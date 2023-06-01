@@ -22,10 +22,11 @@ This function is used internally within \code{\link{readMWRresults}} to run seve
 
 The following checks are made:
 \itemize{
-\item{Column name spelling: }{Should be the following: Monitoring Location ID, Activity Type, Activity Start Date, Activity Start Time, Activity Depth/Height Measure, Activity Depth/Height Unit, Activity Relative Depth Name, Characteristic Name, Result Value, Result Unit, Quantitation Limit, QC Reference Value, Result Measure Qualifier, Result Attribute.}
-\item{Columns present: }{All columns from the previous check should be present, Result Attribute is optional}
+\item{Column name spelling: }{Should be the following: Monitoring Location ID, Activity Type, Activity Start Date, Activity Start Time, Activity Depth/Height Measure, Activity Depth/Height Unit, Activity Relative Depth Name, Characteristic Name, Result Value, Result Unit, Quantitation Limit, QC Reference Value, Result Measure Qualifier, Result Attribute, Sample Collection Method ID, Project ID, Local Record ID, Result Comment}
+\item{Columns present: }{All columns from the previous check should be present}
 \item{Activity Type: }{Should be one of Field Msr/Obs, Sample-Routine, Quality Control Sample-Field Blank, Quality Control Sample-Lab Blank, Quality Control Sample-Lab Duplicate, Quality Control Sample-Lab Spike, Quality Control-Calibration Check, Quality Control-Meter Lab Duplicate, Quality Control-Meter Lab Blank}
 \item{Date formats: }{Should be mm/dd/yyyy and parsed correctly on import}
+\item{Depth data present: }{Depth data should be included in Activity Depth/Height Measure or Activity Relative Depth Name for all rows where Activity Type is Field Msr/Obs or Sample-Routine}
 \item{Non-numeric Activity Depth/Height Measure: }{All depth values should be numbers, excluding missing values}
 \item{Activity Depth/Height Unit: }{All entries should be \code{ft}, \code{m}, or blank}
 \item{Activity Relative Depth Name: }{Should be either Surface, Bottom, Midwater, Near Bottom, or blank (warning only)}

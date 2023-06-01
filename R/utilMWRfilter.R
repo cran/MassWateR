@@ -1,4 +1,4 @@
-#' Filter results data by date range, site, result attributes, and/or location group
+#' Filter results data by parameter, date range, site, result attributes, and/or location group
 #'
 #' @param resdat results data as returned by \code{\link{readMWRresults}}
 #' @param sitdat site metadata file as returned by \code{\link{readMWRresults}}
@@ -10,7 +10,7 @@
 #' @param alllocgroup logical indicating if results data are filtered by all location groups in \code{"Location Group"} in the site metadata file if \code{locgroup = NULL}, used only in \code{\link{anlzMWRdate}}
 #' @param allresultatt logical indicating if results data are filtered by all result attributes if \code{resultatt = NULL}, used only in \code{\link{anlzMWRsite}}
 #'
-#' @return \code{resdat} filtered by \code{dtrng}, \code{site}, \code{resultatt}, and/or \code{locgroup}, otherwise \code{resdat} unfiltered if arguments are \code{NULL}
+#' @return \code{resdat} filtered by \code{param}, \code{dtrng}, \code{site}, \code{resultatt}, and/or \code{locgroup}, otherwise \code{resdat} filtered only by \code{param} if other arguments are \code{NULL}
 #' @export
 #'
 #' @examples
@@ -26,16 +26,16 @@
 #' # site data
 #' sitdat <- readMWRsites(sitpth)
 #' 
-#' # filter by date
+#' # filter by parameter, date range
 #' utilMWRfilter(resdat, param = 'DO', dtrng = c('2022-06-01', '2022-06-30'))
 #' 
-#' # filter by site
+#' # filter by parameter, site
 #' utilMWRfilter(resdat, param = 'DO', site = c('ABT-026', 'ABT-062', 'ABT-077'))
 #' 
-#' # filter by result attribute
+#' # filter by parameter, result attribute
 #' utilMWRfilter(resdat, param = 'DO', resultatt = 'DRY')
 #' 
-#' # filter by location group
+#' # filter by parameter, location group, date range
 #' utilMWRfilter(resdat, param = 'DO', sitdat = sitdat, 
 #'      locgroup = 'Assabet', dtrng = c('2022-06-01', '2022-06-30'))
 utilMWRfilter <- function(resdat, sitdat = NULL, param, dtrng = NULL, site = NULL, resultatt = NULL, locgroup = NULL, alllocgroup = FALSE, allresultatt = FALSE){
@@ -54,7 +54,7 @@ utilMWRfilter <- function(resdat, sitdat = NULL, param, dtrng = NULL, site = NUL
   # check if parameter in resdat
   chk <- param %in% resprms
   if(!chk)
-    stop(param, ' not found in results data, should be one of ', paste(resprms, collapse = ', '), call. = FALSE)
+    stop(param, ' not found or no surface data in results file, should be one of ', paste(resprms, collapse = ', '), call. = FALSE)
   
   resdat <- resdat %>% 
     dplyr::filter(`Characteristic Name` %in% param)

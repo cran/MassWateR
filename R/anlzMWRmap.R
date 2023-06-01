@@ -13,13 +13,15 @@
 #' @param repel logical indicating if overlapping site labels are offset
 #' @param labsize numeric for size of the site labels
 #' @param palcol character string indicating the color palette to be used from \href{https://r-graph-gallery.com/38-rcolorbrewers-palettes.html}{RColorBrewer}, see details
-#' @param yscl character indicating one of \code{"auto"} (default), \code{"log"}, or \code{"linear"}, see details
+#' @param palcolrev logical indicating if color palette in \code{palcol} is reversed
+#' @param sumfun character indicating one of \code{"auto"} (default), \code{"mean"}, \code{"geomean"}, \code{"median"}, \code{"min"}, or \code{"max"}, see details
 #' @param crs numeric as a four-digit EPSG number for the coordinate reference system, see details
 #' @param zoom numeric indicating resolution of the base map, see details
 #' @param addwater character string as \code{"low"}, \code{"medium"} (default), \code{"high"}, or \code{NULL} (to supress) to include water features with varying detail from the National Hydrography dataset, see details
 #' @param watercol character string of color for water objects if \code{addwater = "nhd"} or \code{addwater = "osm"}
 #' @param maptype character string for the base map type, see details
-#' @param buffdist numeric for buffer around the bounding box for the selected sites, see details
+#' @param buffdist numeric for buffer around the bounding box for the selected sites in kilometers, see details
+#' @param scaledist character string indicating distance unit for the scale bar, \code{"km"} or \code{"mi"}
 #' @param northloc character string indicating location of the north arrow, see details
 #' @param scaleloc character string indicating location of the scale bar, see details
 #' @param latlon logical to include latitude and longitude labels on the plot, default \code{TRUE}
@@ -33,11 +35,11 @@
 #' @details 
 #' This function creates a map of summarized results for a selected parameter at each monitoring site.  By default, all dates for the parameter are averaged. Options to filter by site, date range, and result attribute are provided.  Only sites with spatial information in the site metadata file are plotted and a warning is returned for those that do not have this information. The site labels are also plotted next to each point.  The labels can be suppressed by setting \code{labsize = NULL}.
 #' 
-#' Any acceptable color palette from \href{https://r-graph-gallery.com/38-rcolorbrewers-palettes.html}{RColorBrewer} can be used for \code{palcol}, which is passed to the \code{palette} argument in \code{\link[ggplot2]{scale_fill_distiller}}. These could include any of the sequential color palettes, e.g., \code{"Greens"}, \code{"Blues"}, etc.  The diverging and qualitative palettes will also work, but may return uninterpretable color scales. 
+#' Any acceptable color palette from \href{https://r-graph-gallery.com/38-rcolorbrewers-palettes.html}{RColorBrewer} can be used for \code{palcol}, which is passed to the \code{palette} argument in \code{\link[ggplot2]{scale_fill_distiller}}. These could include any of the sequential color palettes, e.g., \code{"Greens"}, \code{"Blues"}, etc.  The diverging and qualitative palettes will also work, but may return uninterpretable color scales. The palette can be reversed by setting \code{palcolrev = TRUE}.
 #' 
 #' The default value for \code{crs} is EPSG 4326 for the WGS 84 projection in decimal degrees.  The \code{crs} argument is passed to \code{\link[sf]{st_as_sf}} and any acceptable CRS appropriate for the data can be used. 
 #' 
-#' The results shown on the map represent the parameter average for each site within the date range provided by \code{dtrng}.  The average may differ depending on the value provided to the \code{yscl} argument.  Log10-distributed parameters use the geometric mean and normally-distributed parameters use the arithmetic mean.  The distribution is determined from the \code{ycsl} argument. If \code{yscl = "auto"} (default), the distribution is determined automatically from the data quality objective file for accuracy, i.e., parameters with "log" in any of the columns are summarized with the geometric mean, otherwise arithmetic. Setting \code{yscl = "linear"} or \code{yscl = "log"} will the use arithmetic or geometric summaries, respectively, regardless of the information in the data quality objective file for accuracy. 
+#' The results shown on the map represent the parameter summary for each site within the date range provided by \code{dtrng}.  If \code{sumfun = "auto"} (default), the mean is used where the distribution is determined automatically from the data quality objective file for accuracy, i.e., parameters with "log" in any of the columns are summarized with the geometric mean, otherwise arithmetic. Any other valid summary function will be applied if passed to \code{sumfun} (\code{"mean"}, \code{"geomean"}, \code{"median"}, \code{"min"}, \code{"max"}), regardless of the information in the data quality objective file for accuracy. 
 #' 
 #' Using \code{addwater = "medium"} (default) will include lines and polygons of natural water bodies defined using the National Hydrography Dataset (NHD). The level of detail can be changed to low or high using \code{addwater = "low"} or \code{addwater = "high"}, respectively.  Use \code{addwater = NULL} to not show any water features.
 #' 
@@ -68,12 +70,9 @@
 #' 
 #' \donttest{
 #' # map with NHD water bodies
-#' anlzMWRmap(res = resdat, param = 'DO', acc = accdat, sit = sitdat, addwater = "medium")
+#' anlzMWRmap(res = resdat, param = 'DO', acc = accdat, sit = sitdat, addwater = 'medium')
 #' }
-anlzMWRmap<- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, site = NULL, resultatt = NULL, locgroup = NULL, dtrng = NULL, ptsize = 4, repel = TRUE, labsize = 3, palcol = 'Greens', yscl = c('auto', 'log', 'linear'), crs = 4326, zoom = 11, addwater = "medium", watercol = 'lightblue', maptype = NULL, buffdist = 2, northloc = 'tl', scaleloc = 'br', latlon = TRUE, ttlsize = 1.2, runchk = TRUE, warn = TRUE){
-  
-  # if(!requireNamespace('ggmap', quietly = TRUE))
-  #   stop("Package \"ggmap\" needed for this function to work. Please install it.", call. = FALSE)
+anlzMWRmap<- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, site = NULL, resultatt = NULL, locgroup = NULL, dtrng = NULL, ptsize = 4, repel = TRUE, labsize = 3, palcol = 'Greens', palcolrev = FALSE, sumfun = 'auto', crs = 4326, zoom = 11, addwater = 'medium', watercol = 'lightblue', maptype = NULL, buffdist = 2, scaledist = 'km', northloc = 'tl', scaleloc = 'br', latlon = TRUE, ttlsize = 1.2, runchk = TRUE, warn = TRUE){
   
   utilMWRinputcheck(mget(ls()))
   
@@ -95,15 +94,15 @@ anlzMWRmap<- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, si
   # fill BDL, AQL
   resdat <- utilMWRlimits(resdat = resdat, accdat = accdat, param = param, warn = warn)
   
-  # get y axis scaling
-  logscl <- utilMWRyscale(accdat = accdat, param = param, yscl = yscl)
-  
   tomap <- resdat %>% 
     dplyr::group_by(`Monitoring Location ID`)
   
-  tomap <- utilMWRconfint(tomap, logscl = logscl)
+  tomap <- utilMWRsummary(tomap, accdat = accdat, param = param, sumfun = sumfun, confint = FALSE)
     
   # prep map
+  
+  # check scaledist arg as km or mi
+  scaledist <- match.arg(scaledist, c('km', 'mi'))
   
   tomap <- tomap %>% 
     left_join(sitdat, by = 'Monitoring Location ID')
@@ -149,7 +148,7 @@ anlzMWRmap<- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, si
       unname
   
   ylab <- unique(resdat$`Result Unit`)
-  ttl <- utilMWRtitle(param = paste('Average', param), site = site, dtrng = dtrng, locgroup = locgroup, resultatt = resultatt)
+  ttl <- utilMWRtitle(param = param, accdat = accdat, sumfun = sumfun, site = site, dtrng = dtrng, locgroup = locgroup, resultatt = resultatt)
     
   m <- ggplot2::ggplot()
 
@@ -203,12 +202,15 @@ anlzMWRmap<- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, si
     
   }
   
+  # color palette direction
+  palcolrev <- ifelse(palcolrev, -1, 1)
+  
   tomap <- tomap %>% 
     sf::st_transform(crs = 4326)
 
     m <-  m +
       ggplot2::geom_sf(data = tomap, ggplot2::aes(fill = `Result Value`), color = 'black', pch = 21, inherit.aes = F, size = ptsize) +
-      ggplot2::scale_fill_distiller(name = ylab, palette = palcol, direction = 1) +
+      ggplot2::scale_fill_distiller(name = ylab, palette = palcol, direction = palcolrev) +
       ggplot2::theme(
         panel.grid = ggplot2::element_blank(), 
         axis.title = ggplot2::element_blank(), 
@@ -222,10 +224,12 @@ anlzMWRmap<- function(res = NULL, param, acc = NULL, sit = NULL, fset = NULL, si
         title = ttl
       ) 
 
-  if(!is.null(scaleloc))
+  if(!is.null(scaleloc)){
+    scaledist <- ifelse(scaledist == 'km', 'metric', 'imperial')
     m <- m +
-      ggspatial::annotation_scale(location = scaleloc)
-   
+      ggspatial::annotation_scale(location = scaleloc, unit_category = scaledist)
+  }
+    
   if(!is.null(northloc))
     m <- m +
       ggspatial::annotation_north_arrow(location = northloc, which_north = "true", height = grid::unit(0.75, "cm"), 

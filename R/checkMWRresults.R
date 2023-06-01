@@ -7,10 +7,11 @@
 #' 
 #' The following checks are made: 
 #' \itemize{
-#'  \item{Column name spelling: }{Should be the following: Monitoring Location ID, Activity Type, Activity Start Date, Activity Start Time, Activity Depth/Height Measure, Activity Depth/Height Unit, Activity Relative Depth Name, Characteristic Name, Result Value, Result Unit, Quantitation Limit, QC Reference Value, Result Measure Qualifier, Result Attribute.}
-#'  \item{Columns present: }{All columns from the previous check should be present, Result Attribute is optional}
+#'  \item{Column name spelling: }{Should be the following: Monitoring Location ID, Activity Type, Activity Start Date, Activity Start Time, Activity Depth/Height Measure, Activity Depth/Height Unit, Activity Relative Depth Name, Characteristic Name, Result Value, Result Unit, Quantitation Limit, QC Reference Value, Result Measure Qualifier, Result Attribute, Sample Collection Method ID, Project ID, Local Record ID, Result Comment}
+#'  \item{Columns present: }{All columns from the previous check should be present}
 #'  \item{Activity Type: }{Should be one of Field Msr/Obs, Sample-Routine, Quality Control Sample-Field Blank, Quality Control Sample-Lab Blank, Quality Control Sample-Lab Duplicate, Quality Control Sample-Lab Spike, Quality Control-Calibration Check, Quality Control-Meter Lab Duplicate, Quality Control-Meter Lab Blank}
 #'  \item{Date formats: }{Should be mm/dd/yyyy and parsed correctly on import}
+#'  \item{Depth data present: }{Depth data should be included in Activity Depth/Height Measure or Activity Relative Depth Name for all rows where Activity Type is Field Msr/Obs or Sample-Routine}
 #'  \item{Non-numeric Activity Depth/Height Measure: }{All depth values should be numbers, excluding missing values}
 #'  \item{Activity Depth/Height Unit: }{All entries should be \code{ft}, \code{m}, or blank}
 #'  \item{Activity Relative Depth Name: }{Should be either Surface, Bottom, Midwater, Near Bottom, or blank (warning only)}
@@ -46,7 +47,8 @@ checkMWRresults <- function(resdat, warn = TRUE){
               "Activity Start Time", "Activity Depth/Height Measure", "Activity Depth/Height Unit", 
               "Activity Relative Depth Name", "Characteristic Name", "Result Value", 
               "Result Unit", "Quantitation Limit", "QC Reference Value", "Result Measure Qualifier", 
-              "Result Attribute")
+              "Result Attribute", "Sample Collection Method ID", "Project ID", "Local Record ID", 
+              "Result Comment")
   acttyp <- c("Field Msr/Obs", "Sample-Routine", "Quality Control Sample-Field Blank", 
               "Quality Control Sample-Lab Blank", "Quality Control Sample-Lab Duplicate", 
               "Quality Control Sample-Lab Spike", "Quality Control-Calibration Check", 
@@ -56,9 +58,9 @@ checkMWRresults <- function(resdat, warn = TRUE){
   unityp <- c('ft', 'm')
   restyp <- c('AQL', 'BDL')
 
-  # check field names, minus those for wqx
+  # check field names
   msg <- '\tChecking column names...'
-  nms <- names(resdat)[!names(resdat) %in% c('Sample Collection Method ID', 'Project ID', 'Result Comment')] 
+  nms <- names(resdat)
   chk <- nms %in% colnms
   if(any(!chk)){
     tochk <- nms[!chk]
@@ -66,10 +68,10 @@ checkMWRresults <- function(resdat, warn = TRUE){
   }
   message(paste(msg, 'OK'))
   
-  # check all fields are present, Result Attribute optional
+  # check all fields are present
   msg <- '\tChecking all required columns are present...'
   nms <- names(resdat)
-  chk <- colnms[-14] %in% nms
+  chk <- colnms %in% nms
   if(any(!chk)){
     tochk <- colnms[!chk]
     stop(msg, '\n\tMissing the following columns: ', paste(tochk, collapse = ', '), call. = FALSE)
@@ -98,6 +100,17 @@ checkMWRresults <- function(resdat, warn = TRUE){
   }
   message(paste(msg, 'OK'))
 
+  # check depth data present
+  msg <- '\tChecking depth data present...'
+  typ <- resdat[, c('Activity Depth/Height Measure', 'Activity Relative Depth Name')]
+  rws <- rowSums(is.na(typ)) == 2 & resdat$`Activity Type` %in% c('Field Msr/Obs', 'Sample-Routine')
+  chk <- !any(rws)
+  if(!chk){
+    rws <- which(rws)
+    stop(msg, '\n\tNo data in Activity Depth/Height Measure and Activity Relative Depth Name on row(s): ', paste(rws, collapse = ', '), call. = FALSE)
+  }
+  message(paste(msg, 'OK'))
+
   # check for non-numeric depth
   msg <- '\tChecking for non-numeric values in Activity Depth/Height Measure...'
   typ <- resdat$`Activity Depth/Height Measure`
@@ -108,7 +121,7 @@ checkMWRresults <- function(resdat, warn = TRUE){
     stop(msg, '\n\tNon-numeric entries in Activity Depth/Height Measure found: ', paste(tochk, collapse = ', '), ' in rows ', paste(rws, collapse = ', '), call. = FALSE)
   }
   message(paste(msg, 'OK'))
-
+  
   # checking invalid unit entries for depth
   msg <- '\tChecking Activity Depth/Height Unit...'
   typ <- resdat$`Activity Depth/Height Unit`
