@@ -11,9 +11,6 @@
 #'   \item{Convert characteristic names: }{All parameters in \code{Characteristic Name} are converted to \code{Simple Parameter} in \code{\link{paramsMWR}} as needed}
 #' }
 #' 
-#' @import dplyr
-#' @import tidyr
-#' 
 #' @return A formatted data frame of the water quality monitoring results file
 #' 
 #' @export
@@ -29,18 +26,47 @@
 #' formMWRresults(resdat)
 formMWRresults <- function(resdat, tzone = 'America/Jamaica'){
   
-  # format input
+  # format date
   out <- resdat %>% 
-    mutate(
+    dplyr::mutate(
       `Activity Start Date` = lubridate::force_tz(`Activity Start Date`, tzone = tzone), 
-      `Activity Start Date` = lubridate::ymd(`Activity Start Date`),
-      `Activity Start Time` = gsub('^.*\\s', '', as.character(`Activity Start Time`)),
-      `Activity Start Time` = gsub(':00$', '', `Activity Start Time`)
+      `Activity Start Date` = lubridate::ymd(`Activity Start Date`)
     )
+
+  # convert decimal number to hh:mm
+  timfunc <- function(x){
+    hr <- 24 * suppressWarnings(as.numeric(x))
+    min <- sprintf('%02d', round(60 * (hr - floor(hr)), 0))
+    hr <- floor(hr)
+    hr[min == '60'] <- hr[min == '60'] + 1
+    min <- gsub('^60$', '00', min)
+    out <- paste(hr, min, sep = ':')
+    return(out)
+  }
+
+  # format time, handles both text and time input from Excel, and a mix of the two
+  out <- resdat %>%
+    dplyr::mutate(
+      `Activity Start Time` = gsub('^.*\\s(\\d*:.*$)', '\\1', as.character(`Activity Start Time`)), 
+      `Activity Start Time` = ifelse(grepl('^.*\\:.*$', `Activity Start Time`), `Activity Start Time`, timfunc(`Activity Start Time`)), 
+      ispm = grepl('PM', `Activity Start Time`)
+    ) %>% 
+    tidyr::separate(`Activity Start Time`, c('hr', 'mn', 'rm'), sep = ':', fill = 'right') %>% 
+    dplyr::mutate(
+      hr = suppressWarnings(as.numeric(hr)),
+      hr = ifelse(ispm & hr < 12, hr + 12, hr), 
+      hr = sprintf('%02d', hr)
+    ) %>% 
+    tidyr::unite('Activity Start Time', hr, mn, sep = ':') %>% 
+    dplyr::mutate(
+      `Activity Start Time` = trimws(gsub('AM$|PM$', '', `Activity Start Time`)),
+      `Activity Start Time` = dplyr::na_if(`Activity Start Time`, 'NA:NA')
+    ) %>% 
+    dplyr::select(-rm, -ispm)
 
   # convert ph s.u. to NA, salinity ppt to ppth 
   out <- out %>% 
-    mutate(
+    dplyr::mutate(
       `Result Unit` = trimws(`Result Unit`),
       `Result Unit` = gsub('^ppt$', 'ppth', `Result Unit`) ,
       `Result Unit` = ifelse(

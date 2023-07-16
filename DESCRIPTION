@@ -1,6 +1,6 @@
 Package: MassWateR
 Title: Quality Control and Analysis of Massachusetts Water Quality Data
-Version: 2.1.0
+Version: 2.1.1
 Authors@R: c(
     person(given = "Marcus",
       family = "Beck",
@@ -47,11 +47,11 @@ LazyDataCompression: xz
 Suggests: covr, knitr, patchwork, testthat (>= 3.0.0)
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2023-06-01 21:18:51 UTC; MarcusBeck
+Packaged: 2023-07-16 15:01:37 UTC; mbeck
 Author: Marcus Beck [aut, cre] (<https://orcid.org/0000-0002-4996-0059>),
   Jill Carr [aut],
   Ben Wetherill [aut] (<https://orcid.org/0000-0002-8791-4256>),
   Pam DiBona [aut]
 Maintainer: Marcus Beck <mbeck@tbep.org>
 Repository: CRAN
-Date/Publication: 2023-06-01 21:30:02 UTC
+Date/Publication: 2023-07-16 15:20:02 UTC
