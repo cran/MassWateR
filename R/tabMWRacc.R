@@ -48,6 +48,8 @@ tabMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk
 
   utilMWRinputcheck(mget(ls()))
   
+  accchkall <- c('Field Blanks', 'Lab Blanks', 'Field Duplicates', 'Lab Duplicates', 'Lab Spikes / Instrument Checks')
+  
   type <- match.arg(type)
   
   # table theme
@@ -56,9 +58,8 @@ tabMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk
     flextable::autofit(x)
   }
   
-  if(type %in% c('summary', 'percent')){
-    accchk <- c('Field Blanks', 'Lab Blanks', 'Field Duplicates', 'Lab Duplicates', 'Lab Spikes / Instrument Checks')
-  }
+  if(type %in% c('summary', 'percent'))
+    accchk <- accchkall
   
   # get accuracy summary
   accsum <- qcMWRacc(res = res, acc = acc, frecom = frecom, fset = fset, runchk = runchk, warn = warn, accchk = accchk, suffix = suffix)
@@ -68,13 +69,34 @@ tabMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk
     if(length(accchk) != 1)
       stop('accchk must have only one entry for type = "individual"')
 
+    if(!accchk %in% accchkall)
+      stop('accchk must be one of ', paste(accchkall, collapse  = ', '))
+    
     totab <- accsum[[1]]
     
-    # stop if no data to use for table
+    # warning if no data to use for table
     if(is.null(totab)){
-      if(warn)
-        warning(paste('No data to check for', accchk), call. = FALSE)
+      
+      # identify valid entries for accchk
+      chk <- qcMWRacc(res = res, acc = acc, frecom = frecom, fset = fset, runchk = F, warn = F, 
+                      accchk = accchkall, suffix = suffix
+      ) %>% 
+        lapply(is.null) %>% 
+        unlist()
+      
+      # check if accsum completely empty
+      if(all(chk))
+        stop('No QC records or reference values for parameters with defined DQOs. Cannot create QC tables.', call. = FALSE)
+      
+      # warning for accchk entry with no data, indication of acchk entries with data
+      if(warn){
+        datent <- paste(names(chk)[!chk], collapse = ', ')
+        msg <- paste0('No data to check for ', accchk, ', data available for ', datent)
+        warning(msg, call. = FALSE)
+      }
+      
       return(NULL)
+      
     }
 
     totab <- totab %>% 
@@ -129,7 +151,7 @@ tabMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk
           levels = c("Field Duplicates", "Lab Duplicates", "Field Blanks", "Lab Blanks", "Lab Spikes / Instrument Checks")
         )
       ) %>% 
-      dplyr::arrange(Type, Parameter)
+      dplyr::arrange(Type, Parameter, .locale = 'en')
 
     ##
     # create parameter list for all
@@ -276,7 +298,7 @@ tabMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk
           check = gsub('\\_percent', '', check)
         ) %>%
         tidyr::pivot_wider(names_from = check, values_from = value) %>% 
-        dplyr::arrange(Parameter)
+        dplyr::arrange(Parameter, .locale = 'en')
 
       # table
       tab <- flextable::flextable(totab, col_keys = grep('\\_met', names(totab), value = T, invert = T)) %>% 
@@ -297,7 +319,7 @@ tabMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk
       
     }
   }
-  
+
   return(tab)
   
 }

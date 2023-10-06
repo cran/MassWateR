@@ -10,8 +10,11 @@
 #'  \item{Column name spelling: }{Should be the following: Parameter, uom, MDL, UQL, Value Range, Field Duplicate, Lab Duplicate, Field Blank, Lab Blank, Spike/Check Accuracy}
 #'  \item{Columns present: }{All columns from the previous check should be present}
 #'  \item{Column types: }{All columns should be characters/text, except for MDL and UQL}
-#'  \item{Value Range column na check: }{The character string \code{"na"} should not be in the \code{Value Range} column, \code{"all"} should be used if the entire range applies}
-#'  \item{Unrecognized characters: }{Fields describing accuracy checks should not include symbols or text other than \eqn{<=}, \eqn{\leq}, \eqn{<}, \eqn{>=}, \eqn{\geq}, \eqn{>}, \eqn{\pm}, %, BDL, AQL, log, or all}
+#'  \item{\code{Value Range} column na check: }{The character string \code{"na"} should not be in the \code{Value Range} column, \code{"all"} should be used if the entire range applies}
+#'  \item{Unrecognized characters: }{Fields describing accuracy checks should not include symbols or text other than \eqn{<=}, \eqn{\leq}, \eqn{<}, \eqn{>=}, \eqn{\geq}, \eqn{>}, \eqn{\pm}, \code{"\%"}, \code{"BDL"}, \code{"AQL"}, \code{"log"}, or \code{"all"}}
+#'  \item{Number of rows per parameter in \code{Value Range}: }{Should not exceed two}
+#'  \item{Overlap in \code{Value Range} column: }{Entries in \code{Value Range} should not overlap for a parameter}
+#'  \item{Gap in \code{Value Range} column: }{Entries in \code{Value Range} should not include a gap for a parameter, warning only}
 #'  \item{Parameter: }{Should match parameter names in the \code{Simple Parameter} or \code{WQX Parameter} columns of the \code{\link{paramsMWR}} data}
 #'  \item{Units: }{No missing entries in units (\code{uom}), except pH which can be blank}
 #'  \item{Single unit: }{Each unique \code{Parameter} should have only one type for the units (\code{uom})}
@@ -26,9 +29,13 @@
 #' @export
 #'
 #' @examples
-#' accpth <- system.file('extdata/ExampleDQOAccuracy.xlsx', package = 'MassWateR')
+#' # accuracy path
+#' accpth <- system.file('extdata/ExampleDQOAccuracy.xlsx', 
+#'      package = 'MassWateR')
 #' 
-#' accdat <- readxl::read_excel(accpth, na = c('NA', 'na', '')) 
+#' # accuracy data with no checks
+#' accdat <- readxl::read_excel(accpth, na = c('NA', ''), col_types = 'text')
+#' accdat <- dplyr::mutate(accdat, dplyr::across(-c(`Value Range`), ~ dplyr::na_if(.x, 'na'))) 
 #'       
 #' checkMWRacc(accdat)
 checkMWRacc <- function(accdat, warn = TRUE){
@@ -67,15 +74,23 @@ checkMWRacc <- function(accdat, warn = TRUE){
 
   # checking column types
   msg <- '\tChecking column types...'
-  typ <- sapply(accdat, function(x) {
-    all(grepl('^(?=.)([+-]?([0-9]*)(\\.([0-9]+))?)$', na.omit(x), perl = TRUE))  
+  numcol <- names(accdat) %in% c('MDL', 'UQL') # should be the only numeric columns
+  typnum <- accdat[, numcol]
+  typchr <- accdat[, !numcol]
+  chknum <- sapply(typnum, function(x) {
+    if(all(is.na(x))) return(TRUE)
+    numc <- suppressWarnings(as.numeric(na.omit(x)))
+    !any(is.na(numc))
   })
-  typ <- ifelse(typ, 'numeric', 'character')
-  chk <- typ == coltyp
+  chkchr <- sapply(typchr, function(x) {
+    if(all(is.na(x))) return(TRUE)
+    all(!grepl('^(?=.)([+-]?([0-9]*)(\\.([0-9]+))?)$', na.omit(x), perl = TRUE))
+  })
+  chk <- c(chknum, chkchr)[names(accdat)]
   if(any(!chk)){
-    tochk <- names(typ)[!chk]
-    totyp <- typ[!chk]
-    tochk <- paste(tochk, totyp, sep = '-')
+    tochk <- names(chk[!chk])
+    totyp <- coltyp[!chk]
+    tochk <- paste(tochk, paste('should be', totyp), sep = '-')
     stop(msg, '\n\tIncorrect column type found in columns: ', paste(tochk, collapse = ', '), call. = FALSE)
   }
   message(paste(msg, 'OK'))
@@ -104,6 +119,40 @@ checkMWRacc <- function(accdat, warn = TRUE){
     stop(msg, '\n\tUnrecognized text in columns: ', paste0(tochk, collapse = ', '), call. = FALSE)
   }
   message(paste(msg, 'OK'), domain = NA)
+
+  # Number of rows per parameter
+  msg <- '\tChecking number of rows per parameter...'
+  chk <- table(accdat$Parameter)
+  chk <- chk <= 2
+  if(any(!chk)){
+    tochk <- names(chk)[!chk]
+    stop(msg, '\n\tMore than two rows: ', paste(tochk, collapse = ', '), call. = FALSE)
+  }
+  message(paste(msg, 'OK'))
+
+  # check overlap in value range
+  msg <- '\tChecking overlaps in Value Range...'
+  typ <- utilMWRvaluerange(accdat)
+  chk <- !typ %in% 'overlap'
+  if(any(!chk)){
+    nms <- names(typ)[!chk]
+    stop(msg, '\n\tOverlap in value range: ', paste(nms, collapse = ', '), call. = FALSE)
+  }
+  message(paste(msg, 'OK'))
+  
+  # check gap in value range
+  msg <- '\tChecking gaps in Value Range...'
+  typ <- utilMWRvaluerange(accdat)
+  chk <- !typ %in% 'gap'
+  if(any(!chk)){
+    nms <- names(typ)[!chk]
+    if(warn)
+      warning(msg, '\n\tGap in value range in DQO accuracy file: ', paste(nms, collapse = ', '), call. = FALSE)
+    wrn <- wrn + 1
+    message(paste(msg, 'WARNING'))
+  } else {
+    message(paste(msg, 'OK'))
+  }
   
   # check parameter names
   msg <- '\tChecking Parameter formats...'

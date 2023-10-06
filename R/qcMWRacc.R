@@ -111,6 +111,18 @@ qcMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk 
     stop('Mis-match between units in result and DQO file: ', paste(tochk, collapse = ', '), call. = FALSE)
   }
   
+  # ##
+  # # warning if value ranges in accdat do not cover complete range
+  
+  if(warn){
+    typ <- utilMWRvaluerange(accdat)
+    chk <- !typ %in% 'gap'
+    if(any(!chk)){
+      nms <- names(typ)[!chk]
+      warning('Gap in value range in DQO accuracy file: ', paste(nms, collapse = ', '), call. = FALSE)
+    }
+  }
+
   ##
   # accuracy checks
   
@@ -153,7 +165,7 @@ qcMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk 
         isnum = suppressWarnings(as.numeric(Result)), 
         isnum = !is.na(isnum)
       ) %>% 
-      dplyr::arrange(Parameter, -dplyr::desc(Date))
+      dplyr::arrange(Parameter, -dplyr::desc(Date), .locale = 'en')
 
     # field blank
     if('Quality Control Sample-Field Blank' %in% blk$`Activity Type` & 'Field Blanks' %in% accchk & any(!is.na(blk$`Field Blank`)))
@@ -326,7 +338,7 @@ qcMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk 
       ) %>% 
       dplyr::filter(ifelse(is.na(rngflt), T, max(rngflt) == rngflt)) %>% 
       dplyr::ungroup() %>% 
-      dplyr::arrange(Parameter, -dplyr::desc(Date))
+      dplyr::arrange(Parameter, -dplyr::desc(Date), .locale = 'en')
 
     # field duplicates
     if('Field Duplicate' %in% dup$`Activity Type` & 'Field Duplicates' %in% accchk & any(!is.na(dup$`Field Duplicate`)))
@@ -467,10 +479,30 @@ qcMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk 
           )
         )
       ) %>% 
-      tidyr::unite('flt', `Avg. Result`, `Value Range`, sep = ' ', remove = FALSE) %>% 
+      tidyr::unite('flt', `Avg. Result`, `Value Range`, sep = ' ', remove = FALSE)
+    
+    # check that upper value range is a percent DQO for QC checks with result unit as %
+    chk <- labins %>% 
+      dplyr::filter(grepl('%', `Result Unit`)) %>% 
+      dplyr::filter(grepl(">|\u2265", `Value Range`)) %>% 
+      dplyr::filter(!grepl('%', `Spike/Check Accuracy`))
+    
+    if(nrow(chk) > 0){
+      prms <- sort(unique(chk$Parameter))
+      stop('Lab Spikes / Instrument Checks with units as % must have DQO accuracy as % for upper value range: ', paste(prms, collapse = ', '))
+    }
+    
+    # continue  
+    labins <- labins %>%  
       dplyr::rowwise() %>% 
       dplyr::mutate(
-        flt = ifelse(grepl('all', flt), T, eval(parse(text = flt)))
+        flt = ifelse(grepl('all', flt), T, 
+          ifelse(grepl('%', `Result Unit`) & grepl('>=|>|\u2265', `Value Range`), T, # handles checks where result unit is % to select upper value range
+            ifelse(grepl('%', `Result Unit`) & grepl('<=|<|\u2264', `Value Range`), F, # handles checks where result unit is % to select upper value range
+              eval(parse(text = flt))
+            )
+          )
+        )
       ) %>% 
       dplyr::filter(flt) %>% 
       dplyr::group_by(ind) %>% 
@@ -485,15 +517,15 @@ qcMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk 
         recov = 100 * Recovered2 / Standard2,
         `Spike/Check Accuracy2` = gsub('%|log', '', `Spike/Check Accuracy`),
       ) %>% 
-      dplyr::arrange(Parameter, -dplyr::desc(Date)) %>% 
+      dplyr::arrange(Parameter, -dplyr::desc(Date), .locale = 'en') %>% 
       dplyr::rowwise() %>% 
       dplyr::mutate(
         `Hit/Miss` = ifelse(
           grepl('%|log', `Spike/Check Accuracy`) & !is.na(`Spike/Check Accuracy`), 
-          eval(parse(text = paste(percv, `Spike/Check Accuracy2`))), 
+          eval(parse(text = paste(abs(percv), `Spike/Check Accuracy2`))), 
           ifelse(
             !grepl('%|log', `Spike/Check Accuracy`) & !is.na(`Spike/Check Accuracy`), 
-            eval(parse(text = paste(diffv, `Spike/Check Accuracy`))), 
+            eval(parse(text = paste(abs(diffv), `Spike/Check Accuracy`))), 
             NA
           )
         ),
@@ -524,7 +556,7 @@ qcMWRacc <- function(res = NULL, acc = NULL, frecom = NULL, fset = NULL, runchk 
         `Hit/Miss`
       ) %>% 
       dplyr::ungroup() %>% 
-      dplyr::arrange(Parameter)
+      dplyr::arrange(Parameter, .locale = 'en')
 
   }
 
