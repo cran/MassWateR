@@ -1,6 +1,6 @@
 Package: MassWateR
 Title: Quality Control and Analysis of Massachusetts Water Quality Data
-Version: 2.1.2
+Version: 2.1.3
 Authors@R: c(
     person(given = "Marcus",
       family = "Beck",
@@ -28,9 +28,9 @@ Description: Methods for quality control and exploratory analysis of surface
   from Massachusetts Department of Environmental Protection (2020) 
   <https://www.mass.gov/orgs/massachusetts-department-of-environmental-protection>.
 Depends: R (>= 3.5)
-Imports: curl, dplyr, flextable, ggmap, ggplot2, ggrepel, ggspatial,
-        httr, lubridate, RColorBrewer, rmarkdown, readxl, sf, tidyr,
-        tibble, units, writexl
+Imports: curl, dplyr, flextable, ggplot2, ggrepel, ggspatial, httr,
+        lubridate, prettymapr, raster, RColorBrewer, rmarkdown, readxl,
+        sf, tidyr, tibble, units, writexl
 License: CC0
 Encoding: UTF-8
 RoxygenNote: 7.2.3
@@ -42,10 +42,10 @@ LazyDataCompression: xz
 Suggests: covr, knitr, patchwork, testthat (>= 3.0.0)
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2023-10-06 12:32:52 UTC; mbeck
+Packaged: 2023-10-26 14:12:38 UTC; MarcusBeck
 Author: Marcus Beck [aut, cre] (<https://orcid.org/0000-0002-4996-0059>),
   Jill Carr [aut],
   Ben Wetherill [aut] (<https://orcid.org/0000-0002-8791-4256>)
 Maintainer: Marcus Beck <mbeck@tbep.org>
 Repository: CRAN
-Date/Publication: 2023-10-06 14:30:19 UTC
+Date/Publication: 2023-10-26 16:30:09 UTC

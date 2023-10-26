@@ -1,3 +1,9 @@
+# MassWateR 2.1.3
+
+* `anlzMWRmap()` has different basemap options using the `maptype` argument, these include `"cartolight"`, `"cartodark"`, `"osm"`, or `"hotstyle"`. These changes accommodate recent issues with access to stamen tiles.
+* ggmap dependency was removed, added raster and prettymapr dependencies
+* Fixed issue in Roxygen documentation for itemized lists
+
 # MassWateR 2.1.2
 
 * Warning is now returned if a column for a QC check includes all `na` entries on import of the DQO accuracy file with `readMWRacc()`
@@ -12,7 +18,7 @@
 * Fix to `checkMWRacc()` to convert MDL and UQL columns in DQO accuracy as numeric following import as text
 * Fixed bug to evaluate lab spike QC checks as the absolute difference, was previously a relative difference
 * New error message if the upper value range in the DQO accuracy file is not a percent value for lab spike QC checks with units as percentage
-* Lab spikes entered as a percent measure are now evaluated against the correct data quality objective using the upper value range
+* Lab spikes entered as a percent measure are now always evaluated against the data quality objective for the upper value range
 * Better error and warning messages for `tabMWRacc()` for incorrect and required data for individual QC checks
 
 # MassWateR 2.1.1
