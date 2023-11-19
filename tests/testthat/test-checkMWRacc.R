@@ -1,13 +1,13 @@
 test_that("Checking column name spelling", {
   chk <- accdatchk
   names(chk)[c(1, 4)] <- c('Variables', 'AQL')
-  expect_error(checkMWRacc(chk))
+  expect_error(checkMWRacc(chk), 'Please correct the column names or remove: Variables, AQL', fixed = T)
 })
 
 test_that("Checking required column names are present", {
   chk <- accdatchk
   chk <- chk[, -10]
-  expect_error(checkMWRacc(chk))
+  expect_error(checkMWRacc(chk), 'Missing the following columns: Spike/Check Accuracy', fixed = T)
 })
 
 test_that("Checking column types, including NA", {
@@ -32,12 +32,6 @@ test_that("Checking for text other than <=, \u2264, <, >=, \u2265, >, \u00b1, %,
   chk$`Value Range`[4] <- 'b'
   chk$`Field Duplicate` <- 'alll'
   expect_error(checkMWRacc(chk), regexp = 'Unrecognized text in columns: Value Range, Field Duplicate', fixed = T)
-})
-
-test_that("Checking for more than two rows per parameter", {
-  chk <- accdatchk
-  chk <- bind_rows(accdatchk, accdatchk[8,], accdatchk[6,])
-  expect_error(checkMWRacc(chk), regexp = 'More than two rows: Sp Conductance, TP', fixed = T)
 })
 
 test_that("Checking overlap in value range", {
@@ -67,27 +61,27 @@ test_that("Checking missing entries in uom", {
 test_that("Checking more than one unit type per parameter", {
   chk <- accdatchk
   chk[4, 2] <- 'ug/l'
-  expect_error(checkMWRacc(chk))
+  expect_error(checkMWRacc(chk), 'More than one unit (uom) found for Parameter: DO: mg/l, ug/l', fixed = T)
 })
 
 test_that("Checking correct Parameters", {
   chk <- accdatchk
   chk[7, 1] <- 'tss'
   chk[5, 1] <- 'sp-conductivity'
-  expect_error(checkMWRacc(chk))
+  expect_warning(expect_error(checkMWRacc(chk), 'Incorrect Parameter found: sp-conductivity, tss in row(s) 5, 7', fixed = T))
 })
 
 test_that("Checking incorrect unit type per parameter", {
   chk <- accdatchk
-  chk[chk$`Parameter` == 'Chl a', 2] <- 'micrograms/L'
+  chk[chk$`Parameter` == 'Water Temp', 2] <- 'celsius'
   chk[chk$`Parameter` == 'TP', 2] <- 'mg/L'
-  expect_error(checkMWRacc(chk))
+  expect_error(checkMWRacc(chk), 'Incorrect units (uom) found for Parameters: Water Temp: celsius, TP: mg/L', fixed = T)
 })
 
 test_that("Checking empty column", {
   chk <- accdatchk
   chk[[7]] <- NA
-  expect_warning(checkMWRacc(chk))
+  expect_warning(checkMWRacc(chk),'Empty or all na columns found: Lab Duplicate')
 })
 
 test_that("Checking na in Value Range", {
