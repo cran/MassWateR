@@ -1,7 +1,13 @@
+# MassWateR 2.1.5
+
+* Added check to `checkMWRresults()` for results data to verify all values in the quantitation limit column are numbers, with updated instructions in the results template file
+* Parameter list (`paramMWR`) updated with Pycocyanin, Phycocyanin (probe), RFU as unit for chlorophyll, including appropriate updates to `thresholdMWR`, results template, and WQX phys-chem template
+* Removed prettymapr, raster, added maptile and tidyterra for `anlzMWRmap()` basemaps, this changes the options that are accepted by the `maptype` argument
+
 # MassWateR 2.1.4
 
 * Improved warning message for all empty or `na` entries in `checkMWRacc()` and `checkMWRfrecom()`
-* Changed `tabMWRwqx()` output column name to `Present Above Quantification Limit` for result value as `AQL`
+* Fixed spelling of `tabMWRwqx()` output in the `Result Detection Condition` column for "Present Above Quantification Limit"
 * Fix to `checkMWRacc()` if more than two value ranges in DQO accuracy file as ascending, previously resulted in error
 * Fix to incorrect parameter paste in error message in `checkMWRfrecom()` if values less than 0 or greater than 100 are found
 * Improved tests to check error or warning messages for `checkMWRfrecom()` and `checkMWRacc()`

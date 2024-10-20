@@ -4,12 +4,11 @@
 [![R-CMD-check](https://github.com/massbays-tech/MassWateR/workflows/R-CMD-check/badge.svg)](https://github.com/massbays-tech/MassWateR/actions)
 [![pkgdown](https://github.com/massbays-tech/MassWateR/workflows/pkgdown/badge.svg)](https://github.com/massbays-tech/MassWateR/actions)
 [![Codecov test coverage](https://codecov.io/gh/massbays-tech/MassWateR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/massbays-tech/MassWateR?branch=main)
-[![parambuild](https://github.com/massbays-tech/MassWateR/workflows/parambuild/badge.svg)](https://github.com/massbays-tech/MassWateR/actions)
 [![CRAN status](https://www.r-pkg.org/badges/version/MassWateR)](https://CRAN.R-project.org/package=MassWateR)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/MassWateR)](https://CRAN.R-project.org/package=MassWateR)
 <!-- badges: end -->
 
-R package for working with Massachusetts surface water quality data, created in partnership by the [Mass Bays National Estuary Partnership](https://massbays.org/){target="_blank"}.
+R package for working with Massachusetts surface water quality data, created in partnership by the [Mass Bays National Estuary Partnership](https://massbays.org/).
 
 Please cite the package as: 
 
@@ -51,7 +50,7 @@ In addition to the content on this web page, the MassWateR Community of Practice
 
 ## Issues and help 
 
-Please report any issues (bugs or errors) on the [issues link](https://github.com/massbays-tech/MassWateR/issues){target="_blank"} for the repository.  Please visit the <a href="https://massbays.discourse.group/login" target="_blank">Community of Practice</a> forum for general questions, help, sharing ideas, or to suggest package improvements.
+Please report any issues (bugs or errors) on the [issues link](https://github.com/massbays-tech/MassWateR/issues) for the repository.  Please visit the <a href="https://massbays.discourse.group/login" target="_blank">Community of Practice</a> forum for general questions, help, sharing ideas, or to suggest package improvements.
 
 ## Contributing 
 
@@ -59,4 +58,4 @@ Please view our [contributing](https://github.com/massbays-tech/MassWateR/blob/m
 
 ## Code of Conduct
   
-Please note that the MassWateR project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html){target="_blank"}. By contributing to this project, you agree to abide by its terms.
+Please note that the MassWateR project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/0/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
