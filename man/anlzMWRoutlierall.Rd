@@ -10,7 +10,7 @@ anlzMWRoutlierall(
   fset = NULL,
   fig_height = 4,
   fig_width = 8,
-  format = c("word", "png"),
+  format = c("word", "png", "zip"),
   output_dir,
   output_file = NULL,
   type = c("box", "jitterbox", "jitter"),
@@ -24,6 +24,7 @@ anlzMWRoutlierall(
   width = 0.8,
   yscl = "auto",
   ttlsize = 1.2,
+  bssize = 11,
   runchk = TRUE,
   warn = TRUE
 )
@@ -39,7 +40,7 @@ anlzMWRoutlierall(
 
 \item{fig_width}{numeric for plot width in inches}
 
-\item{format}{character string indicating if results are placed in a word file or as separate png files in \code{output_dir}}
+\item{format}{character string indicating if results are placed in a word file, as separate png files, or as a zipped file of separate png files in \code{output_dir}}
 
 \item{output_dir}{character string of the output directory for the results}
 
@@ -66,6 +67,8 @@ anlzMWRoutlierall(
 \item{yscl}{character indicating one of \code{"auto"} (default), \code{"log"}, or \code{"linear"}, see details}
 
 \item{ttlsize}{numeric value indicating font size of the title relative to other text in the plot}
+
+\item{bssize}{numeric for overall plot text scaling, passed to \code{\link[ggplot2]{theme_minimal}}}
 
 \item{runchk}{logical to run data checks with \code{\link{checkMWRresults}} or \code{\link{checkMWRacc}}, applies only if \code{res} or \code{acc} are file paths}
 
@@ -100,5 +103,8 @@ anlzMWRoutlierall(resdat, accdat, group = 'month', format = 'word', output_dir =
 
 # create png output
 anlzMWRoutlierall(resdat, accdat, group = 'month', format = 'png', output_dir = tempdir())
+
+# create zipped png output
+anlzMWRoutlierall(resdat, accdat, group = 'month', format = 'zip', output_dir = tempdir())
 }
 }

@@ -119,7 +119,7 @@ checkMWRresults <- function(resdat, warn = TRUE){
   if(any(!chk)){
     rws <- which(!chk)
     tochk <- unique(typ[!chk])
-    stop(msg, '\n\tNon-numeric entries in Activity Depth/Height Measure found: ', paste(tochk, collapse = ', '), ' in rows ', paste(rws, collapse = ', '), call. = FALSE)
+    stop(msg, '\n\tNon-numeric entries in Activity Depth/Height Measure found: ', paste(tochk, collapse = ', '), ' in row(s) ', paste(rws, collapse = ', '), call. = FALSE)
   }
   message(paste(msg, 'OK'))
   
@@ -191,11 +191,11 @@ checkMWRresults <- function(resdat, warn = TRUE){
   msg <- '\tChecking Result Values...'
   typ <- resdat$`Result Value`
   chk <- paste(paste0('^', restyp, '$'), collapse = '|')
-  chk <- !is.na(suppressWarnings(as.numeric(typ))) | grepl(chk, typ) | is.na(typ)
+  chk <- !is.na(suppressWarnings(as.numeric(typ))) | grepl(chk, typ)
   if(any(!chk)){
     rws <- which(!chk)
     tochk <- unique(typ[!chk])
-    stop(msg, '\n\tIncorrect entries in Result Value found: ', paste(tochk, collapse = ', '), ' in rows ', paste(rws, collapse = ', '), call. = FALSE)
+    stop(msg, '\n\tIncorrect entries in Result Value found: ', paste(tochk, collapse = ', '), ' in row(s) ', paste(rws, collapse = ', '), call. = FALSE)
   }
   message(paste(msg, 'OK'))
 
@@ -206,7 +206,7 @@ checkMWRresults <- function(resdat, warn = TRUE){
   if(any(!chk)){
     rws <- which(!chk)
     tochk <- unique(typ[!chk])
-    stop(msg, '\n\tNon-numeric entries in Quantitation Limit found: ', paste(tochk, collapse = ', '), ' in rows ', paste(rws, collapse = ', '), call. = FALSE)
+    stop(msg, '\n\tNon-numeric entries in Quantitation Limit found: ', paste(tochk, collapse = ', '), ' in row(s) ', paste(rws, collapse = ', '), call. = FALSE)
   }
   message(paste(msg, 'OK'))
   
@@ -218,7 +218,7 @@ checkMWRresults <- function(resdat, warn = TRUE){
   if(any(!chk)){
     rws <- which(!chk)
     tochk <- unique(typ[!chk])
-    stop(msg, '\n\tIncorrect entries in QC Reference Value found: ', paste(tochk, collapse = ', '), ' in rows ', paste(rws, collapse = ', '), call. = FALSE)
+    stop(msg, '\n\tIncorrect entries in QC Reference Value found: ', paste(tochk, collapse = ', '), ' in row(s) ', paste(rws, collapse = ', '), call. = FALSE)
   }
   message(paste(msg, 'OK'))
 
@@ -229,7 +229,7 @@ checkMWRresults <- function(resdat, warn = TRUE){
   chk <- !chk
   if(any(!chk)){
     rws <- which(!chk)
-    stop(msg, '\n\tMissing Result Unit in rows ', paste(rws, collapse = ', '), call. = FALSE)
+    stop(msg, '\n\tMissing Result Unit in row(s) ', paste(rws, collapse = ', '), call. = FALSE)
   }
   message(paste(msg, 'OK'))
 

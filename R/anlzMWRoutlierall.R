@@ -7,7 +7,7 @@
 #' @param fset optional list of inputs with elements named \code{res}, \code{acc}, \code{frecom}, \code{sit}, or \code{wqx} overrides the other arguments
 #' @param fig_height numeric for plot heights in inches
 #' @param fig_width numeric for plot width in inches
-#' @param format character string indicating if results are placed in a word file or as separate png files in \code{output_dir}
+#' @param format character string indicating if results are placed in a word file, as separate png files, or as a zipped file of separate png files in \code{output_dir}
 #' @param output_dir character string of the output directory for the results
 #' @param output_file optional character string for the file name if \code{format = "word"}
 #' @param type character indicating \code{"box"}, \code{"jitterbox"}, or \code{"jitter"}, see details
@@ -21,6 +21,7 @@
 #' @param width numeric for width of boxplots
 #' @param yscl character indicating one of \code{"auto"} (default), \code{"log"}, or \code{"linear"}, see details
 #' @param ttlsize numeric value indicating font size of the title relative to other text in the plot
+#' @param bssize numeric for overall plot text scaling, passed to \code{\link[ggplot2]{theme_minimal}}
 #' @param runchk logical to run data checks with \code{\link{checkMWRresults}} or \code{\link{checkMWRacc}}, applies only if \code{res} or \code{acc} are file paths
 #' @param warn logical to return warnings to the console (default)
 #'
@@ -49,8 +50,11 @@
 #'
 #' # create png output
 #' anlzMWRoutlierall(resdat, accdat, group = 'month', format = 'png', output_dir = tempdir())
+#' 
+#' # create zipped png output
+#' anlzMWRoutlierall(resdat, accdat, group = 'month', format = 'zip', output_dir = tempdir())
 #' }
-anlzMWRoutlierall <- function(res = NULL, acc = NULL, fset = NULL, fig_height = 4, fig_width = 8, format = c('word' ,'png'), output_dir, output_file = NULL, type = c('box', 'jitterbox', 'jitter'), group, dtrng = NULL, repel = TRUE, outliers = FALSE, labsize = 3, fill = 'lightgrey', alpha = 0.8, width = 0.8, yscl = 'auto', ttlsize = 1.2, runchk = TRUE, warn = TRUE){
+anlzMWRoutlierall <- function(res = NULL, acc = NULL, fset = NULL, fig_height = 4, fig_width = 8, format = c('word' ,'png', 'zip'), output_dir, output_file = NULL, type = c('box', 'jitterbox', 'jitter'), group, dtrng = NULL, repel = TRUE, outliers = FALSE, labsize = 3, fill = 'lightgrey', alpha = 0.8, width = 0.8, yscl = 'auto', ttlsize = 1.2, bssize = 11, runchk = TRUE, warn = TRUE){
   
   utilMWRinputcheck(mget(ls()))
   
@@ -72,7 +76,7 @@ anlzMWRoutlierall <- function(res = NULL, acc = NULL, fset = NULL, fig_height = 
   names(pall) <- allparam
   for(param in allparam){
     
-    p <- anlzMWRoutlier(res = resdat, param = param, acc = accdat, type = type, group = group, dtrng = dtrng, repel = repel, outliers = outliers, labsize = labsize, fill = fill, alpha = alpha, width = width, yscl = yscl, ttlsize = ttlsize, runchk = FALSE, warn = warn)
+    p <- anlzMWRoutlier(res = resdat, param = param, acc = accdat, type = type, group = group, dtrng = dtrng, repel = repel, outliers = outliers, labsize = labsize, fill = fill, alpha = alpha, width = width, yscl = yscl, ttlsize = ttlsize, bssize = bssize, runchk = FALSE, warn = warn)
     
     pall[[param]] <- p
     
@@ -107,7 +111,7 @@ anlzMWRoutlierall <- function(res = NULL, acc = NULL, fset = NULL, fig_height = 
   }
    
   # png output
-  if(format == 'png'){
+  if(format == 'png' | format == 'zip'){
    
     # create directory if it doesn't exist
     if(!file.exists(output_dir))
@@ -124,6 +128,25 @@ anlzMWRoutlierall <- function(res = NULL, acc = NULL, fset = NULL, fig_height = 
     }
     
     msg <- paste("PNG files created successfully! Files located at", output_dir)
+    
+    if(format == 'zip'){
+      
+      # sort out file name
+      if(is.null(output_file))
+        output_file <- 'outlierall.zip'
+      else
+        output_file <- paste0(tools::file_path_sans_ext(output_file), '.zip')
+      
+      fls <- list.files(path = output_dir, pattern = '.png', full.names = TRUE)
+      
+      utils::zip(zipfile = file.path(output_dir, output_file), files = fls, flags = '-qj')
+      
+      file.remove(fls)
+      
+      msg <- gsub('Files located at', 'Zipped files located at', msg)  
+      
+    }
+    
     message(msg)
     
   }
